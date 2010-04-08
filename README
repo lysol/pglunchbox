@@ -1,0 +1,12 @@
+pgoptparse
+-----------------
+
+If you find yourself hammering options into optparse often for PostgreSQL scripts, this module may be of some use to you.  Call it just like OptionParser, and you'll get a set of default options akin to psql's option syntax.  As a bonus, like psql, it'll read your pgpass and use that.
+
+See pgoptparse_test.py for an example usage.  The password prompt and pgpass read will occur during parser.parse_args(), not when you initialize the parser object.
+
+TODO:
+
+* I haven't done the rigorous permissions check that psql does on your pgpass file.  I might add it later.
+
+derek@dderek.com
