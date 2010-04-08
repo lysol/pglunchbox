@@ -3,6 +3,8 @@ from platform import system
 from getpass import getpass, getuser, GetPassWarning
 import os 
 
+
+
 class PGOptionParser(OptionParser):
     """PGOptParser is OptionParser, except it provides automatic configuration to read psql-like options for mucking with PostgreSQL databases.  It'll even read from pgpass!"""
 
@@ -20,6 +22,21 @@ class PGOptionParser(OptionParser):
                (fields[3] == self.options.username or fields[3] == '*'):
                 return fields[4]
         return False
+
+    def connection_string(self, ssl=False):
+        """Provides a libpq-compatible connection string. Not comprehensive for all options.  Use this with psycopg2, etc."""
+        if ssl:
+            sslmode = 'enable'
+        else:
+            sslmode = 'disable'
+        if not hasattr(self, 'options'):
+            return None 
+
+        constr = "dbname='%s' host='%s' port='%i' user='%s' password='%s' sslmode='%s'"
+        return constr % (self.options.database, self.options.hostname, \
+                         self.options.port, self.options.username, \
+                         self.options.password, sslmode)
+            
 
     def parse_args(self, args=None, values=None):
         """Override the default method so we can do our own checks."""
