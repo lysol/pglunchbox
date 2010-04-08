@@ -8,5 +8,6 @@ See pgoptparse_test.py for an example usage.  The password prompt and pgpass rea
 TODO:
 
 * I haven't done the rigorous permissions check that psql does on your pgpass file.  I might add it later.
+* Also need to read in environmental variables like DBNAME, etc.
 
 derek@dderek.com
