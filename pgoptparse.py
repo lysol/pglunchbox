@@ -1,4 +1,5 @@
 import os
+import stat
 from optparse import * 
 from platform import system
 from getpass import getpass, getuser, GetPassWarning
@@ -73,8 +74,15 @@ class PGOptionParser(OptionParser):
 
         # Read in the pgpass file
         if os.path.exists(self.pgpass):
-            possible_password = self.__read_pgpass()
-            setattr(self.options, 'password', possible_password)
+            if system() != 'Windows':
+                mode = os.stat(self.pgpass)[stat.ST_MODE]
+                if (stat.S_IROTH & mode) or (stat.S_IRGRP & mode):
+                    # Bad user, chmod 600 your pgpass
+                    print 'WARNING: password file "%s" has world' % self.pgpass + \
+                        ' or group read access; permission should be u=rw (0600)'
+            else:
+                possible_password = self.__read_pgpass()
+                setattr(self.options, 'password', possible_password)
 
         # Are we going to prompt for a password?
         if ((hasattr(self.options, 'password') == False or \
@@ -89,7 +97,7 @@ class PGOptionParser(OptionParser):
     def __init__(self, usage=None, option_list=None, option_class=Option,
                  version=None, conflict_handler='error', description=None,
                  formatter=None, add_help_option=True, prog=None, epilog=None):
-        """Extend the default constructor to build standard psql-like options."""
+        """Extend the constructor to build standard psql-like options."""
 
         OptionParser.__init__(self, usage=usage, add_help_option=False,
                               option_list=option_list,
@@ -107,21 +115,25 @@ class PGOptionParser(OptionParser):
         self.add_option('-h', '--host',
                         dest='hostname', metavar='HOSTNAME',
                         default=defaults['PGHOST'],
-                        help='database server host (default: %s)' % defaults['PGHOST'])
-        self.add_option('-p', '--port',
-                        dest='port', metavar='PORT', default=defaults['PGPORT'], type='int',
-                        help='database server port (default: %i)' % defaults['PGPORT'])
-        self.add_option('-U', '--username',
-                        dest='username', metavar='USERNAME', default=defaults['PGUSER'],
-                        help='database user name (default: "%s")' % defaults['PGUSER'])
+                        help='database server host (default: %s)' % \
+                        defaults['PGHOST'])
+        self.add_option('-p', '--port', dest='port', metavar='PORT',
+                        default=defaults['PGPORT'], type='int',
+                        help='database server port (default: %i)' % \
+                        defaults['PGPORT'])
+        self.add_option('-U', '--username', dest='username',
+                        metavar='USERNAME', default=defaults['PGUSER'],
+                        help='database user name (default: "%s")' % \
+                        defaults['PGUSER'])
         self.add_option('-w', '--no-password',
                         dest='no_password', action='store_true',
                         help='never prompt for password')
         self.add_option('-W', '--password',
                         dest='force_password', action='store_true',
-                        help='force password prompt (should happen automatically)')
-        self.add_option('-d', '--dbname',
-                        dest='database', default=defaults['PGDATABASE'], metavar='DBNAME',
+                        help='force password prompt ' + \
+                        '(should happen automatically)')
+        self.add_option('-d', '--dbname', dest='database',
+                        default=defaults['PGDATABASE'], metavar='DBNAME',
                         help='database name to connect to (default: "%s")' % \
                             defaults['PGDATABASE'])
 

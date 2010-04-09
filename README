@@ -7,7 +7,7 @@ See pgoptparse_test.py for an example usage.  The password prompt and pgpass rea
 
 TODO:
 
-* I haven't done the rigorous permissions check that psql does on your pgpass file.  I might add it later.
+* None right now! Ask me to add something else.
 
 Derek Arnold
 http://dderek.com
