@@ -6,6 +6,7 @@ from getpass import getpass, getuser, GetPassWarning
 
 
 class PermissionWarning(Warning):
+    """Raised when the pgpass file's permissions are insecure."""
 
     def __init__(self, filename):
         self.filename = filename
@@ -13,9 +14,17 @@ class PermissionWarning(Warning):
     def __str__(self):
         return 'WARNING: password file "%s" has world or group' % self.pgpass + \
             ' read access; permission should be u=rw (0600)'
-    
+
+
+class MalformedPGPass(Exception):
+    """Raised when a pgpass line has the incorrect number of fields."""
+
+    def __str__(self):
+        return 'Your pgpass file has at least one malformed line.'
+
 
 class PGPassFile:
+    """Provides a hassle-free interface to your pgpass file."""
 
     def __read_pgpass(self, filename):
         """Read the file located in self.pgpass and parse it, setting the
@@ -81,6 +90,29 @@ class PGPassFile:
                 return fields[4]
         return None
 
+    def connection_string(self, line_number, ssl=False):
+        """Provides a libpq-compatible connection string. Not comprehensive for
+        all options.  Use this with psycopg2, etc."""
+
+        cline = self.pgpass_lines[line_number]
+      
+        if ssl:
+            sslmode = 'enable'
+        else:
+            sslmode = 'disable'
+
+        constr = \
+            "dbname='%s' host='%s' port='%s' " + \
+            "user='%s' password='%s' sslmode='%s'"
+
+        print cline
+        if len(cline) != 5:
+            raise MalformedPGPass()
+
+        constr = constr % (cline[2], cline[0], cline[1], cline[3], cline[4],
+            sslmode)
+        return constr
+
     def __init__(self, filename=''):
         """Populate the pgpass lines."""
 
@@ -104,8 +136,6 @@ class PGPassFile:
                     raise PermissionWarning(filename)
                 else:
                     self.__read_pgpass(filename)
-                    # possible_password = self.__read_pgpass()
-                    # setattr(self.options, 'password', possible_password)
             else:
                 # Windows user.  No permissions check.
                 self.__read_pgpass(filename)
