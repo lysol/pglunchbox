@@ -8,6 +8,25 @@ from getpass import getpass, getuser, GetPassWarning
 class PGOptionParser(OptionParser):
     """Extends OptionParser to add psql-like options and other conveniences."""
 
+    def __dict_coalesce(self, dict_1, dict_2):
+        """This may be an example of cargo cult programming."""
+
+        payload = {}
+        for key in dict_2.keys():
+            if dict_1.has_key(key):
+                payload[key] = dict_1[key]
+            else:
+                payload[key] = dict_2[key]
+        return payload
+
+    def __pg_defaults(self):
+        """Parse environmental variables like PGPASS, etc."""
+
+        defaults = { 'PGPORT': 5432, 'PGDATABASE': getuser(),
+                     'PGHOST': 'localhost', 'PGUSER': getuser() }
+
+        return self.__dict_coalesce(os.environ, defaults)
+
     def __read_pgpass(self):
         """Read the file located in self.pgpass and parse it, setting the
         password if matched."""
@@ -67,25 +86,6 @@ class PGOptionParser(OptionParser):
                 pass 
         return (self.options, self.args)
 
-    def __dict_coalesce(self, dict_1, dict_2):
-        """This may be an example of cargo cult programming."""
-
-        payload = {}
-        for key in dict_2.keys():
-            if dict_1.has_key(key):
-                payload[key] = dict_1[key]
-            else:
-                payload[key] = dict_2[key]
-        return payload
-
-    def __pg_defaults(self):
-        """Parse environmental variables like PGPASS, etc."""
-
-        defaults = { 'PGPORT': 5432, 'PGDATABASE': getuser(),
-                     'PGHOST': 'localhost', 'PGUSER': getuser() }
-
-        return self.__dict_coalesce(os.environ, defaults)
-
     def __init__(self, usage=None, option_list=None, option_class=Option,
                  version=None, conflict_handler='error', description=None,
                  formatter=None, add_help_option=True, prog=None, epilog=None):
@@ -107,13 +107,13 @@ class PGOptionParser(OptionParser):
         self.add_option('-h', '--host',
                         dest='hostname', metavar='HOSTNAME',
                         default=defaults['PGHOST'],
-                        help='database server host (default: localhost)')
+                        help='database server host (default: %s)' % defaults['PGHOST'])
         self.add_option('-p', '--port',
                         dest='port', metavar='PORT', default=defaults['PGPORT'], type='int',
-                        help='database server port (default: 5432)')
+                        help='database server port (default: %i)' % defaults['PGPORT'])
         self.add_option('-U', '--username',
                         dest='username', metavar='USERNAME', default=defaults['PGUSER'],
-                        help='database user name (default: "%s")' % getuser())
+                        help='database user name (default: "%s")' % defaults['PGUSER'])
         self.add_option('-w', '--no-password',
                         dest='no_password', action='store_true',
                         help='never prompt for password')
@@ -123,7 +123,7 @@ class PGOptionParser(OptionParser):
         self.add_option('-d', '--dbname',
                         dest='database', default=defaults['PGDATABASE'], metavar='DBNAME',
                         help='database name to connect to (default: "%s")' % \
-                            getuser())
+                            defaults['PGDATABASE'])
 
         # Find our pgpass and store the path for later.
         if os.environ.has_key('PGPASSFILE'):
