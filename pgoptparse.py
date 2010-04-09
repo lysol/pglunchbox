@@ -71,7 +71,7 @@ class PGOptionParser(OptionParser):
         if self.options.no_password and self.options.force_password:
             self.error("Options %s are mutually exclusive." % \
                 repr([self.options.no_password, self.options.force_password]))
-
+        
         # Read in the pgpass file
         if os.path.exists(self.pgpass):
             if system() != 'Windows':
@@ -80,9 +80,11 @@ class PGOptionParser(OptionParser):
                     # Bad user, chmod 600 your pgpass
                     print 'WARNING: password file "%s" has world' % self.pgpass + \
                         ' or group read access; permission should be u=rw (0600)'
-            else:
-                possible_password = self.__read_pgpass()
-                setattr(self.options, 'password', possible_password)
+                else:
+                    possible_password = self.__read_pgpass()
+                    setattr(self.options, 'password', possible_password)
+        else:
+            print "Path %s does not exist." % self.pgpass
 
         # Are we going to prompt for a password?
         if ((hasattr(self.options, 'password') == False or \
