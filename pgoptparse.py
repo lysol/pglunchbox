@@ -38,17 +38,16 @@ class PGOptionParser(OptionParser):
 
         constr = \
         "dbname='%s' host='%s' port='%i' user='%s' password='%s' sslmode='%s'"
-        
+
         return constr % (self.options.database, self.options.hostname, \
                          self.options.port, self.options.username, \
                          self.options.password, sslmode)
 
     def parse_args(self, args=None, values=None):
         """Extend the default method to allow for pgpass parsing."""
-        
+
         self.options, self.args = OptionParser.parse_args(self, args=args,
                                                           values=values)
-   
         if self.options.no_password and self.options.force_password:
             self.error("Options %s are mutually exclusive." % \
                 repr([self.options.no_password, self.options.force_password]))
@@ -67,7 +66,26 @@ class PGOptionParser(OptionParser):
             except GetPassWarning:
                 pass 
         return (self.options, self.args)
-            
+
+    def __dict_coalesce(self, dict_1, dict_2):
+        """This may be an example of cargo cult programming."""
+
+        payload = {}
+        for key in dict_2.keys():
+            if dict_1.has_key(key):
+                payload[key] = dict_1[key]
+            else:
+                payload[key] = dict_2[key]
+        return payload
+
+    def __pg_defaults(self):
+        """Parse environmental variables like PGPASS, etc."""
+
+        defaults = { 'PGPORT': 5432, 'PGDATABASE': getuser(),
+                     'PGHOST': 'localhost', 'PGUSER': getuser() }
+
+        return self.__dict_coalesce(os.environ, defaults)
+
     def __init__(self, usage=None, option_list=None, option_class=Option,
                  version=None, conflict_handler='error', description=None,
                  formatter=None, add_help_option=True, prog=None, epilog=None):
@@ -79,19 +97,22 @@ class PGOptionParser(OptionParser):
                               conflict_handler=conflict_handler,
                               description=description, formatter=formatter,
                               prog=None, epilog=None)
-        
+
+        # Parse environmental variables, and fallback to very-defaults
+        defaults = self.__pg_defaults()
+
         self.add_option('-H', '--help',
                         action='help',
                         help='show this help message and exit')
         self.add_option('-h', '--host',
                         dest='hostname', metavar='HOSTNAME',
-                        default='localhost',
+                        default=defaults['PGHOST'],
                         help='database server host (default: localhost)')
         self.add_option('-p', '--port',
-                        dest='port', metavar='PORT', default=5432, type='int',
+                        dest='port', metavar='PORT', default=defaults['PGPORT'], type='int',
                         help='database server port (default: 5432)')
         self.add_option('-U', '--username',
-                        dest='username', metavar='USERNAME', default=getuser(),
+                        dest='username', metavar='USERNAME', default=defaults['PGUSER'],
                         help='database user name (default: "%s")' % getuser())
         self.add_option('-w', '--no-password',
                         dest='no_password', action='store_true',
@@ -100,13 +121,16 @@ class PGOptionParser(OptionParser):
                         dest='force_password', action='store_true',
                         help='force password prompt (should happen automatically)')
         self.add_option('-d', '--dbname',
-                        dest='database', default=getuser(), metavar='DBNAME',
+                        dest='database', default=defaults['PGDATABASE'], metavar='DBNAME',
                         help='database name to connect to (default: "%s")' % \
                             getuser())
 
         # Find our pgpass and store the path for later.
-        if system() == 'Linux':
-            self.pgpass = os.path.expanduser('~') + '/.pgpass'
+        if os.environ.has_key('PGPASSFILE'):
+            self.pgpass = os.environ['PGPASSFILE']
         elif system() == 'Windows':
             self.pgpass = os.environ['APPDATA'] + \
                 '\\\\postgresql\\\\pgpass.conf'
+        else:
+            self.pgpass = os.path.expanduser('~') + '/.pgpass'
+
