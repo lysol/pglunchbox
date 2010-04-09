@@ -1,13 +1,19 @@
-pgoptparse
+pglunchbox
 -----------------
 
-If you find yourself hammering options into optparse often for PostgreSQL scripts, this module may be of some use to you.  Call it just like OptionParser, and you'll get a set of default options akin to psql's option syntax.  As a bonus, like psql, it'll read your pgpass and use that.
+This module provides a couple of convienence classes for use with scripting
+against a PostgreSQL database.  PGOptionParser extends OptionParser from
+optparse to add default options akin to psql's options.  PGOptionParser will
+also parse your pgpass file, if present, by way of the PGPassFile class.
 
-See pgoptparse_test.py for an example usage.  The password prompt and pgpass read will occur during parser.parse_args(), not when you instantiate the parser.
+PGPassFile also has get_login and get_password methods, that will match the
+following keyword arguments against lines in your pgpass file, and return
+the first matching login and/or password:
 
-TODO:
-
-* None right now! Ask me to add something else.
+hostname
+port
+database
+username (needed for get_password)
 
 Derek Arnold
 http://dderek.com
