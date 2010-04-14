@@ -14,6 +14,6 @@ the first matching login and/or password:
 * database
 * username (needed for get_password)
 
-Derek Arnold
-http://dderek.com
-derek@dderek.com
+[Derek Arnold](mailto:derek@dderek.com)
+
+[http://dderek.com](http://dderek.com)
