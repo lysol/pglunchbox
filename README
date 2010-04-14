@@ -1,5 +1,4 @@
-pglunchbox
------------------
+# pglunchbox
 
 This module provides a couple of convienence classes for use with scripting
 against a PostgreSQL database.  PGOptionParser extends OptionParser from
@@ -10,10 +9,10 @@ PGPassFile also has get_login and get_password methods, that will match the
 following keyword arguments against lines in your pgpass file, and return
 the first matching login and/or password:
 
-hostname
-port
-database
-username (needed for get_password)
+* hostname
+* port
+* database
+* username (needed for get_password)
 
 Derek Arnold
 http://dderek.com
